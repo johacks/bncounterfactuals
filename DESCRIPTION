@@ -11,10 +11,14 @@ LazyData: true
 RoxygenNote: 7.1.2
 Imports: 
     bit,
+    bnlearn,
     coro,
     dequer,
     dplyr,
     plyr,
     r2r,
-    rlang,
-    bnlearn
+    rlang
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

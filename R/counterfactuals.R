@@ -90,7 +90,6 @@ generate_hypothetical_values <- function(evidence) {
 #' )
 #' target <- predict(object = bn, node = bn$Disease$node, data = evidence,
 #'                  method = "bayes-lw")
-#' print(target)
 #' expected <- factor("PAIVS", levels = levels(target))
 #' predict_f <- function(df) {
 #'   predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
@@ -141,59 +140,61 @@ bfs_sfx <- function(predict_f, evidence, target, expected) {
   return(sufficient_exps)
 }
 
-bfs_sfx_test <- function() {
-  if (!requireNamespace("bnlearn", quietly = TRUE)) {
-    warning("bnlearn package needed to execute this test")
-    return()
-  }
-  bn.predict <- utils::getFromNamespace("predict", "bnlearn")
-  set.seed(40)
-  bn <- NULL
-  load("child.rda")  # Load the popular CHILD Bayesian Network
-  evidence = data.frame(
-    LVHReport=factor(x = "yes", levels = dimnames(bn$LVHreport$prob)[[1]]),
-    LowerBodyO2=factor(x = "5-12", levels = dimnames(bn$LowerBodyO2$prob)[[1]]),
-    CO2Report=factor(x = "<7.5", levels = dimnames(bn$CO2Report$prob)[[1]]),
-    XrayReport=factor(x = "Oligaemic", levels = dimnames(bn$XrayReport$prob)[[1]]))
-  target <- bn.predict(
-    object = bn, node = bn$Disease$node, data = evidence,method = "bayes-lw")
-  expected <- factor("PAIVS", levels = levels(target))
-  predict_f <- function(df) {
-    bn.predict(
-      object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
-
-  print(bfs_sfx(predict_f, evidence, target, expected))
-}
-
-#' Title
+#' Create a predict function for use of a bnlearn bayesian network in the
+#' search algorithms.
 #'
-#' @param bn
-#' @param node
-#' @param method
-#' @param threshold
-#' @param default
-#' @param n
+#' @param bn Fitted bayesian network
+#' @param node Name of target node to be predicted
+#' @param method Same options as in parameter 'method' in predict function of
+#' bnlearn
+#' @param threshold Minimum value of posterior probability of the MLE to be
+#' the output of the algorithm. If parameter 'default' is null, the MLE will
+#' be the output even if it doesn't surpass the threshold.
+#' @param default Default predicted target value when threshold isn't exceeded
+#' by the MLE
+#' @param n Same options as in parameter 'n' in predict function of bnlearn
 #'
-#' @return
+#' @return Function to be used in algorithms such as bfs_sfx
 #' @export
 #'
 #' @examples
+#' library(bnlearn)
+#' set.seed(40)
+#' download.file("https://www.bnlearn.com/bnrepository/child/child.rda",
+#'               "child.rda", "auto", quiet = TRUE)
+#' load("child.rda")  # Load CHILD Bayesian Network
+#' evidence = data.frame(
+#'   LVHReport=factor(x = "yes", levels = dimnames(bn$LVHreport$prob)[[1]]),
+#'   LowerBodyO2=factor(x = "5-12", levels = dimnames(bn$LowerBodyO2$prob)[[1]]),
+#'   CO2Report=factor(x = "<7.5", levels = dimnames(bn$CO2Report$prob)[[1]]),
+#'   XrayReport=factor(x = "Oligaemic", levels = dimnames(bn$XrayReport$prob)[[1]])
+#' )
+#' target <- predict(object = bn, node = bn$Disease$node, data = evidence,
+#'                  method = "bayes-lw")
+#' expected <- factor("PAIVS", levels = levels(target))
+#' predict_f <- bnlearn_predict_wrapper(bn, bn$Disease$node, "bayes-lw",
+#'                                      threshold=0.20, default="TGA")
+#' print(bfs_sfx(predict_f, evidence, target, expected))
 bnlearn_predict_wrapper <- function(bn, node, method, threshold = NULL,
                                     default = NULL, n = 500){
+  if (!requireNamespace("bnlearn", quietly = TRUE)) {
+    stop("bnlearn package needed to execute this functionality")
+  }
+  levs <- dimnames(bn[[node]]$prob)[[1]]
+  fact <- factor(levs, levels = levs)
+
   return (function(df) {
-    levs <- dimnames(red.k2.fit[[node]]$prob)[[1]]
-    fact <- factor(levs, levels = levs)
     if (method == "bayes-lw") {
-      pred <- predict(object = red.k2.fit, node = red.k2.fit$Muerto$node,
+      pred <- predict(object = bn, node = node,
                       data = df, method = method, n=n, prob = TRUE)
     }
-    else pred <- predict(object = red.k2.fit, node = red.k2.fit$Muerto$node,
+    else pred <- predict(object = bn, node = node,
                          data = df, method = method, prob = TRUE)
 
     probs <- attr(pred, "prob")
     Map(function(i) {
       mle_i <- which.max(probs[,i])
-      mle <- probs[max, i]
+      mle <- probs[mle_i, i]
       if (!is.null(threshold)) {
         if (mle > threshold) return(fact[[mle_i]])
         else if (is.null(default)) return(fact[[mle_i]])
@@ -204,30 +205,26 @@ bnlearn_predict_wrapper <- function(bn, node, method, threshold = NULL,
   })
 }
 
-debug_p <- function(){
-  library(bnlearn)
-  load("../Notebooks/datos-estaticos.rdata")
-  load("../Notebooks/red-estatica.rdata")
-  comorbilidades <-
-    list("Fumador",
-         "Cardio",
-         "Pulmonar",
-         "Diabetes",
-         "Renal",
-         "Neuro",
-         "Onco",
-         "HTA")
-  evidencia <- datos.red[FALSE, ]
-  evidencia <- datos.red[1, unlist(comorbilidades)]
-  resultado <- predict(object = red.k2.fit, node = red.k2.fit$Muerto$node,
-                       data = evidencia, method = "bayes-lw", n=1000)
-  predict_f <- bnlearn_predict_wrapper(red.k2.fit, red.k2.fit$Muerto$node,
-                                       "bayes-lw", 0.7)
-  esperado = "S"
-  res <- bfs_sfx(predict_f = predict_f, evidence = evidencia,
-                 target = resultado, expected = esperado)
-  print("Evidencia: ")
-  print(evidencia)
-  print(res)
-}
+bfs_sfx_test <- function() {
+  set.seed(40)
+  bn <- NULL
+  if (!requireNamespace("bnlearn", quietly = TRUE)) {
+    stop("bnlearn package needed to execute this functionality")
+  }
+  download.file("https://www.bnlearn.com/bnrepository/child/child.rda",
+                "child.rda", "auto", quiet = TRUE)
+  load("child.rda")  # Load the popular CHILD Bayesian Network
+  file.remove("child.rda")
+  evidence = data.frame(
+    LVHReport=factor(x = "yes", levels = dimnames(bn$LVHreport$prob)[[1]]),
+    LowerBodyO2=factor(x = "5-12", levels = dimnames(bn$LowerBodyO2$prob)[[1]]),
+    CO2Report=factor(x = "<7.5", levels = dimnames(bn$CO2Report$prob)[[1]]),
+    XrayReport=factor(x = "Oligaemic", levels = dimnames(bn$XrayReport$prob)[[1]]))
+  target <- predict(
+    object = bn, node = bn$Disease$node, data = evidence,method = "bayes-lw")
+  expected <- factor("PAIVS", levels = levels(target))
+  predict_f <- bnlearn_predict_wrapper(bn, bn$Disease$node, "bayes-lw",
+                                       threshold=0.20, default="TGA")
 
+  print(bfs_sfx(predict_f, evidence, target, expected))
+}

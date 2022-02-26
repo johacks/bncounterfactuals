@@ -3,3 +3,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^child\.rda$
+^datos-estaticos\.rdata$
+^red-estatica\.rdata$

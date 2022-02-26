@@ -2,7 +2,7 @@
 % Please edit documentation in R/counterfactuals.R
 \name{bfs_sfx}
 \alias{bfs_sfx}
-\title{Title}
+\title{Get sufficient explanations for a prediction}
 \usage{
 bfs_sfx(predict_f, evidence, target, expected)
 }
@@ -21,7 +21,7 @@ counterfactuals).}
 List where each element is a sufficient explanation of the prediction.
 }
 \description{
-Title
+Get sufficient explanations for a prediction
 }
 \examples{
 library(bnlearn)
@@ -37,7 +37,6 @@ evidence = data.frame(
 )
 target <- predict(object = bn, node = bn$Disease$node, data = evidence,
                  method = "bayes-lw")
-print(target)
 expected <- factor("PAIVS", levels = levels(target))
 predict_f <- function(df) {
   predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
