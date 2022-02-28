@@ -5,7 +5,7 @@ vignette: >
   %\VignetteIndexEntry{Get a persuasive explanation of the output of a classifier}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-bibliography: references.bib
+bibliography: [references.bib, packages.bib]
 ---
 
 ```{r, include = FALSE}
@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+knitr::write_bib("bnlearn", file = "packages.bib")
 ```
 
 ```{r setup}
@@ -51,5 +52,17 @@ print(expected)
 predict_f <- function(df) {
   predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
 print("Sufficient explanation for the output:")
+print(bfs_sfx(predict_f, evidence, target, expected))
+```
+
+#### Using a helper function for bnlearn
+
+A wrapper function is provided to use this algorithm with a Bayesian Network as implemented in bnlearn [@R-bnlearn]. The main advantage is that it allows to set a threshold for classification of the MLE. Currently setting a threshold for each label is not allowed, and it is planned to make a change to include this feature soon, as it is a limited policy.
+
+```{r}
+library(bnlearn)
+# Predict most likely label if posterior prob > 0.20 else predict TGA
+predict_f <- bnlearn_predict_wrapper(bn, bn$Disease$node, "bayes-lw",
+                                     threshold=0.20, default="TGA")
 print(bfs_sfx(predict_f, evidence, target, expected))
 ```

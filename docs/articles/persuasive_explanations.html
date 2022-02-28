@@ -145,12 +145,35 @@ value of CO2Report.</p>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[2]]</span>
 <span class="co">#&gt; [1] "LVHReport"   "LowerBodyO2" "XrayReport"</span></code></pre></div>
+<div class="section level5">
+<h5 id="using-a-helper-function-for-bnlearn">Using a helper function for bnlearn<a class="anchor" aria-label="anchor" href="#using-a-helper-function-for-bnlearn"></a>
+</h5>
+<p>A wrapper function is provided to use this algorithm with a Bayesian
+Network as implemented in bnlearn <span class="citation">(Scutari,
+Silander, and Ness 2021)</span>. The main advantage is that it allows to
+set a threshold for classification of the MLE. Currently setting a
+threshold for each label is not allowed, and it is planned to make a
+change to include this feature soon, as it is a limited policy.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.bnlearn.com/" class="external-link">bnlearn</a></span><span class="op">)</span>
+<span class="co"># Predict most likely label if posterior prob &gt; 0.20 else predict TGA</span>
+<span class="va">predict_f</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bnlearn_predict_wrapper.html">bnlearn_predict_wrapper</a></span><span class="op">(</span><span class="va">bn</span>, <span class="va">bn</span><span class="op">$</span><span class="va">Disease</span><span class="op">$</span><span class="va">node</span>, <span class="st">"bayes-lw"</span>,
+                                     threshold<span class="op">=</span><span class="fl">0.20</span>, default<span class="op">=</span><span class="st">"TGA"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/bfs_sfx.html">bfs_sfx</a></span><span class="op">(</span><span class="va">predict_f</span>, <span class="va">evidence</span>, <span class="va">target</span>, <span class="va">expected</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt; [1] "LowerBodyO2" "CO2Report"   "XrayReport"</span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-koopman2021persuasive" class="csl-entry">
 Koopman, Tara, and Silja Renooij. 2021. <span>“Persuasive Contrastive
 Explanations for Bayesian Networks.”</span> In <em>European Conference
 on Symbolic and Quantitative Approaches with Uncertainty</em>, 229–42.
 Springer.
+</div>
+<div id="ref-R-bnlearn" class="csl-entry">
+Scutari, Marco, Tomi Silander, and Robert Ness. 2021. <em>Bnlearn:
+Bayesian Network Structure Learning, Parameter Learning and
+Inference</em>. <a href="https://www.bnlearn.com/" class="external-link">https://www.bnlearn.com/</a>.
+</div>
 </div>
 </div>
 </div>
