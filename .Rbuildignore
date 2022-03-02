@@ -6,3 +6,4 @@
 ^child\.rda$
 ^datos-estaticos\.rdata$
 ^red-estatica\.rdata$
+^_pkgdown\.yml$

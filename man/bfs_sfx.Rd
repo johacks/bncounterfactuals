@@ -4,7 +4,7 @@
 \alias{bfs_sfx}
 \title{Get sufficient explanations for a prediction}
 \usage{
-bfs_sfx(predict_f, evidence, target, expected)
+bfs_sfx(predict_f, evidence, outcome, expected)
 }
 \arguments{
 \item{predict_f}{A function that takes in a dataframe of evidence and outputs
@@ -12,33 +12,37 @@ a list with the prediction for each row.}
 
 \item{evidence}{A dataframe of one row where all columns are of type factor.}
 
-\item{target}{The resulting prediction for the evidence.}
+\item{outcome}{The resulting prediction for the evidence.}
 
-\item{expected}{The expected prediction of the evidence (only for
-counterfactuals).}
+\item{expected}{The expected prediction of the evidence}
 }
 \value{
-List where each element is a sufficient explanation of the prediction.
+Sufficient explanations as a list of named lists.
 }
 \description{
 Get sufficient explanations for a prediction
 }
 \examples{
-library(bnlearn)
 set.seed(40)
 download.file("https://www.bnlearn.com/bnrepository/child/child.rda",
-              "child.rda", "auto", quiet = TRUE)
-load("child.rda")  # Load CHILD Bayesian Network
-evidence = data.frame(
-  LVHReport=factor(x = "yes", levels = dimnames(bn$LVHreport$prob)[[1]]),
-  LowerBodyO2=factor(x = "5-12", levels = dimnames(bn$LowerBodyO2$prob)[[1]]),
-  CO2Report=factor(x = "<7.5", levels = dimnames(bn$CO2Report$prob)[[1]]),
-  XrayReport=factor(x = "Oligaemic", levels = dimnames(bn$XrayReport$prob)[[1]])
+  "child.rda", "auto",
+  quiet = TRUE
 )
-target <- predict(object = bn, node = bn$Disease$node, data = evidence,
-                 method = "bayes-lw")
-expected <- factor("PAIVS", levels = levels(target))
+load("child.rda") # Load CHILD Bayesian Network
+evidence <- data.frame(
+  LVHReport = factor(x = "yes", levels = dimnames(bn$LVHreport$prob)[[1]]),
+  LowerBodyO2 = factor(x = "5-12", levels = dimnames(bn$LowerBodyO2$prob)[[1]]),
+  CO2Report = factor(x = "<7.5", levels = dimnames(bn$CO2Report$prob)[[1]]),
+  XrayReport = factor(x = "Oligaemic", levels = dimnames(bn$XrayReport$prob)[[1]])
+)
+outcome <- predict(
+  object = bn, node = bn$Disease$node, data = evidence,
+  method = "bayes-lw"
+)
+print(paste("Outcome: ", outcome))
+expected <- factor("TGA", levels = levels(outcome))
 predict_f <- function(df) {
-  predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
-print(bfs_sfx(predict_f, evidence, target, expected))
+  predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")
+}
+print(bfs_sfx(predict_f, evidence, outcome, expected))
 }

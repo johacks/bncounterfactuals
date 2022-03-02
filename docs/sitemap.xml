@@ -16,10 +16,19 @@
     <loc>/index.html</loc>
   </url>
   <url>
+    <loc>/LICENSE-text.html</loc>
+  </url>
+  <url>
     <loc>/LICENSE.html</loc>
   </url>
   <url>
+    <loc>/reference/bfs_cfx.html</loc>
+  </url>
+  <url>
     <loc>/reference/bfs_sfx.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bfs_sfx_cfx.html</loc>
   </url>
   <url>
     <loc>/reference/bnlearn_predict_wrapper.html</loc>

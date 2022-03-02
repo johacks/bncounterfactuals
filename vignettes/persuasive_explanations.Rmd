@@ -18,18 +18,18 @@ knitr::write_bib("bnlearn", file = "packages.bib")
 
 ```{r setup}
 library(bncounterfactuals)
+library(bnlearn)
 ```
 
 # Persuasive Explanations
 
 Persuasive explanations of a classifier output given an input $X$ are a tuple $<S,C>$, where $S$ is a set of **sufficient explanations** and $C$ is a set of **counterfactual** explanations. **Sufficient explanations** are subsets of the explanatory variables such that, if they have the same values as in the original input $X$, the output of the classifier will remain the same regardless of the value of the rest of the variables. **Counterfactual explanations** are the opposite: value assignations to a subset of the explanatory variables such that, if they all have different values from the original assignation in $X$, and the other variables remain with the same value, the output changes.
 
-### BFS_SFX
+## BFS_SFX
 
-BFS_SFX [@koopman2021persuasive] is an algorithm to find sufficient explanations for the output of a Bayesian Network, but may also be used for almost any classifier. Below is a use example, where two sufficient explanations are obtained for the output "Fallot". The interpretation of the second explanation for example, is that if (LVHReport="yes", LowerBodyO2="5-12", XrayReport="Oligaemic"), the prediction is "Fallot" regardless of the value of CO2Report.
+BFS_SFX [@koopman2021persuasive] is an algorithm to find **sufficient explanations** for the output of a Bayesian Network, but may also be used for almost any classifier. Below is a use example, where one sufficient explanation is obtained for the output "**Fallot**": with **XrayReport** = "Oligaemic", it is enough to get the same output: "**Fallot**". Note that given the use of an approximate inference algorithm with few available variables, this explanation may change due to the inherent randomness of the algorithm.
 
 ```{r}
-library(bnlearn)
 set.seed(40)
 download.file("https://www.bnlearn.com/bnrepository/child/child.rda",
               "child.rda", "auto", quiet = TRUE)
@@ -46,23 +46,53 @@ print("Classification input (see dataframe):")
 print(evidence)
 print("Classification output:")
 print(target)
-expected <- factor("PAIVS", levels = levels(target))
+expected <- factor("TGA", levels = levels(target))
 print("Expected output was:")
 print(expected)
 predict_f <- function(df) {
-  predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw")}
+  predict(object = bn, node = bn$Disease$node, data = df, method = "bayes-lw", n = 500000)}
 print("Sufficient explanation for the output:")
-print(bfs_sfx(predict_f, evidence, target, expected))
+str(bfs_sfx(predict_f, evidence, target, expected))
 ```
 
-#### Using a helper function for bnlearn
+## BFS_CFX
+
+BFS_CFX [@koopman2021persuasive] is an algorithm to find **counterfactual explanations** for the output of a Bayesian Network, but may also be used for almost any classifier. It is applied in a similar fashion to BFS_CFX (shown above). The output for the next example gives possible counterfactual explanations that would have given the output "TGA" if the rest of the variables maintain the same values.
+
+```{r}
+print("Classification input (see dataframe):")
+print(evidence)
+print("Classification output:")
+print(target)
+print("Expected output was:")
+print(expected)
+print("Counterfactual explanations for the output:")
+str(bfs_cfx(predict_f, evidence, target, expected))
+```
+
+## BFS_SFX_CFX
+
+BFS_SFX_CFX [@koopman2021persuasive] is a combination of both algorithms above that computes at the same time counterfactual and sufficient explanations of an outcome. The different pairs that can be formed with the sufficient explanations and the counterfactual explanations are called persuasive explanations. The algorithm is used similarly to both above:
+
+```{r}
+print("Classification input (see dataframe):")
+print(evidence)
+print("Classification output:")
+print(target)
+print("Expected output was:")
+print(expected)
+print("Persuasive explanations for the output:")
+str(bfs_sfx_cfx(predict_f, evidence, target, expected))
+```
+
+### Using a helper function for bnlearn
 
 A wrapper function is provided to use this algorithm with a Bayesian Network as implemented in bnlearn [@R-bnlearn]. The main advantage is that it allows to set a threshold for classification of the MLE. Currently setting a threshold for each label is not allowed, and it is planned to make a change to include this feature soon, as it is a limited policy.
 
 ```{r}
-library(bnlearn)
 # Predict most likely label if posterior prob > 0.20 else predict TGA
 predict_f <- bnlearn_predict_wrapper(bn, bn$Disease$node, "bayes-lw",
                                      threshold=0.20, default="TGA")
 print(bfs_sfx(predict_f, evidence, target, expected))
 ```
+
